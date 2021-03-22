@@ -1,0 +1,4 @@
+In this tutorial you will build, package, and run your to-do web application with Flask, Nginx, and MongoDB inside of Docker containers. 
+You will define the entire stack configuration in a docker-compose.yml file, along with configuration files for Python, MongoDB, and Nginx. 
+Flask requires a web server to serve HTTP requests, so you will also use Gunicorn, which is a Python WSGI HTTP Server, to serve the application. 
+Nginx acts as a reverse proxy server that forwards requests to Gunicorn for processing.
