@@ -22,3 +22,21 @@ The "environment" property contains the environment variables that are passed to
 The "volumes" property defines the volumes the service is using. In your case the volume <appdata> is mounted inside the container at the "/var/www" directory. 
 The "depends_on" property defines a service that Flask depends on to function properly. In this case, the flask service will depend on >mongodb> since the mongodb service acts as the database for your application. "depends_on" ensures that the flask service only runs if the mongodb service is running.
 The "networks" property specifies frontend and backend as the networks the flask service will have access to.
+
+###### Mongodb service
+In this example, you will use the official 4.0.8 version mongo image.
+The "command" property defines the command that will be executed when the container is started. The command <mongod --auth> will disable logging into the MongoDB shell without credentials, which will secure MongoDB by requiring authentication.
+The "environment" variables <MONGO_INITDB_ROOT_USERNAME> and <MONGO_INITDB_ROOT_PASSWORD> create a root user with the given credentials, so be sure to replace the placeholder with a strong password.
+MongoDB stores its data in "/data/db" by default, therefore the data in the "/data/db" folder will be written to the named volume mongodbdata for persistence. As a result you won’t lose your databases in the event of a restart. 
+The mongoDB service does not expose any ports, so the service will only be accessible through the backend network.
+
+###### Ngnix service
+The ports property will configure the Nginx service to be publicly accessible through ":80" and ":443" and volumes mounts the nginxdata volume inside the container at "/var/log/nginx" directory.
+It's defined the service on which the web server service "depends_on" as <flask>. Finally the networks property defines the networks web server service will have access to the frontend.
+
+###### Bridge networks
+Next, it will create bridge networks to allow the containers to communicate with each other. 
+They are defined two "networks—frontend" and "backend" for the services to connect to. The front-end services, such as Nginx, will connect to the frontend network since it needs to be publicly accessible. Back-end services, such as MongoDB, will connect to the backend network to prevent unauthorized access to the service.
+
+###### Volumes
+Next, you will use volumes to persist the database, application, and configuration files. Since the application will use the databases and files, it is imperative to persist the changes made to them. The volumes are managed by Docker and stored on the filesystem.
