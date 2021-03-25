@@ -1,0 +1,24 @@
+------------------------------- INTRODUCTION ------------------------------
+In this tutorial you will build, package, and run your to-do web application with Flask, Nginx, and MongoDB inside of Docker containers. 
+You will define the entire stack configuration in a docker-compose.yml file, along with configuration files for Python, MongoDB, and Nginx. 
+Flask requires a web server to serve HTTP requests, so you will also use Gunicorn, which is a Python WSGI HTTP Server, to serve the application. 
+Nginx acts as a reverse proxy server that forwards requests to Gunicorn for processing.
+The docker-compose.yml file lets you define your application infrastructure as individual services. The services can be connected to each other 
+and each can have a volume attached to it for persistent storage. 
+Volumes are stored in a part of the host filesystem managed by Docker (/var/lib/docker/volumes/ on Linux).
+Volumes are the best way to persist data in Docker, as the data in the volumes can be exported or shared with other applications. 
+
+---------------------------- DOCKER COMPOSE YML ---------------------------
+The docker-compose.yml file starts with a version number that identifies the Docker Compose file version.
+
+###### Flask service
+You will now define flask as the first service in your "docker-compose.yml".
+
+The "build" property defines the context of the build. In this case, the app folder that will contain the Dockerfile.
+The "container_name" property defines a name for each container.
+The "image" property specifies the image name and what the Docker image will be tagged as. 
+The "restart" property defines how the container should be restarted—in your case it is <unless-stopped>. This means your containers will only be stopped when the Docker Engine is stopped/restarted or when you explicitly stop the containers. The benefit of using the unless-stopped property is that the containers will start automatically once the Docker Engine is restarted or any error occurs.
+The "environment" property contains the environment variables that are passed to the container. You need to provide a secure password for the environment variable <MONGODB_PASSWORD>.
+The "volumes" property defines the volumes the service is using. In your case the volume <appdata> is mounted inside the container at the "/var/www" directory. 
+The "depends_on" property defines a service that Flask depends on to function properly. In this case, the flask service will depend on >mongodb> since the mongodb service acts as the database for your application. "depends_on" ensures that the flask service only runs if the mongodb service is running.
+The "networks" property specifies frontend and backend as the networks the flask service will have access to.
