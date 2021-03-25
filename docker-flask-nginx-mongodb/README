@@ -39,4 +39,29 @@ Next, it will create bridge networks to allow the containers to communicate with
 They are defined two "networks—frontend" and "backend" for the services to connect to. The front-end services, such as Nginx, will connect to the frontend network since it needs to be publicly accessible. Back-end services, such as MongoDB, will connect to the backend network to prevent unauthorized access to the service.
 
 ###### Volumes
-Next, you will use volumes to persist the database, application, and configuration files. Since the application will use the databases and files, it is imperative to persist the changes made to them. The volumes are managed by Docker and stored on the filesystem.
+Next, it will use volumes to persist the database, application, and configuration files. Since the application will use the databases and files, it is imperative to persist the changes made to them. The volumes are managed by Docker and stored on the filesystem.
+The "volumes" section declares the volumes that the application will use to persist data. Here it's defined the volumes "mongodbdata", "appdata", and "nginxdata" for persisting your MongoDB databases, Flask application data, and the Nginx web server logs, respectively. All of these volumes use a local driver to store the data locally. The volumes are used to persist this data so that data like your MongoDB databases and Nginx webserver logs could be lost once you restart the containers.
+
+
+----------------------------------- DOCKERFILE --------------------------------
+###### app/Dockerfile
+With Docker, you can build containers to run your applications from a file called Dockerfile. The Dockerfile is a tool that enables you to create custom images that you can use to install the software required by your application and configure your containers based on your requirements. You can push the custom images you create to Docker Hub or any private registry.
+The "ENV" directive is used to define the environment variables for our group and user ID.
+Linux Standard Base (LSB) specifies that UIDs and GIDs 0-99 are statically allocated by the system. UIDs 100-999 are supposed to be allocated dynamically for system users and groups. UIDs 1000-59999 are supposed to be dynamically allocated for user accounts. Keeping this in mind you can safely assign a UID and GID of 1000, furthermore you can change the UID/GID by updating the GROUP_ID and USER_ID to match your requirements.
+The "WORKDIR" directive defines the working directory for the container.
+The "ADD" directive to copy files from the local app directory to the "/var/www" directory on the container. 
+Next, the Dockerfile will use the "RUN" directive to install Gunicorn and the packages specified in the requirements.txt file.
+By default, Docker containers run as the root user. The root user has access to everything in the system, so the implications of a security breach can be disastrous. To mitigate this security risk, this will create a new user and group that will only have access to the "/var/www" directory.
+The code will first use the "addgroup" command to create a new group named "www". The "-g" flag will set the group ID to the "ENV GROUP_ID=1000" variable that is defined earlier in the Dockerfile.
+The "adduser -D -u $USER_ID -G www www -s /bin/sh" lines creates a "www" user with a user ID of 1000, as defined by the "ENV" variable. The "-s" flag creates the user’s home directory if it does not exist and sets the default login shell to "/bin/sh". The "-G" flag is used to set the user’s initial login group to "www", which was created by the previous command.
+The "USER" command defines that the programs run in the container will use the "www" user. 
+Gunicorn will listen on ":5000", so it will open this port with the EXPOSE command.
+Finally, the "CMD [ "gunicorn", "-w", "4", "--bind", "0.0.0.0:5000", "wsgi"]" line runs the command to start the Gunicorn server with four workers listening on port 5000. The number should generally be between 2–4 workers per core in the server, Gunicorn documentation recommends (2 x $num_cores) + 1 as the number of workers to start with.
+
+###### ngnix/Dockerfile
+This Nginx Dockerfile uses an "alpine" base image, which is a tiny Linux distribution with a minimal attack surface built for security.
+In the "RUN" directive you are installing nginx as well as creating symbolic links to publish the error and access logs to the standard error "(/dev/stderr)" and output "(/dev/stdout)". Publishing errors to standard error and output is a best practice since containers are ephemeral, doing this the logs are shipped to docker logs and from there you can forward your logs to a logging service like the Elastic stack for persistance. After this is done, commands are run to remove the "default.conf" and "/var/cache/apk/*" to reduce the size of the resulting image. Executing all of these commands in a single "RUN" decreases the number of layers in the image, which also reduces the size of the resulting image.
+The "COPY" directive copies the "app.conf" web server configuration inside of the container. 
+The "EXPOSE" directive ensures the containers listen on ports ":80" and ":443", as your application will run on :80 with :443 as the secure port.
+Finally, the CMD directive defines the command to start the Nginx server.
+
